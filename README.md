@@ -171,3 +171,35 @@ The `--host=0.0.0.0` argument will allow the app to recieve requests from any av
 From here, we run our app the same way as before.
 
 > To remove every docker object we can run `docker system prune -a`
+
+
+## Docker Compose
+
+[**Docker Compose**](https://docs.docker.com/compose/) is a tool for defining and running multi-container applications. It makes it easy to manage services, networks and volumes in a single YAML file, and it creates and starts all the services together.
+
+The `docker-compose.yml` file will have all the container's definitions in it:
+
+```yaml
+version: '3'
+# The docker compose environment will start multiple services. Every service will be a container running some other application
+services:
+    # We'll start a container called flask-app
+    flask-app:
+        # from a specified image
+        image: ... # These images are posted on docker hub
+        container-name: flask-app
+        ports: 
+            - "5000:5000"
+        # If the flask application relies on some environment variable
+        environment:
+            - GRADE_SERVICE_HOST=serviceName
+        depends_on:
+            # this service will be created BEFORE the flask app because it depends on it
+            serviceName
+    serviceName:
+        image: ...
+        container_name: serviceName
+        ports:
+            - "localhost:containerport"
+        
+```
