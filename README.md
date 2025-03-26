@@ -49,7 +49,7 @@ The final command would be somehting like: `docker run -v "C:\Users\...\course-c
 ```docker
 FROM python:3.8-slim
 
-WORKDIR /app
+WORKDIR /app # Everything we do from here happens in the working directory
 
 COPY python-app.py /app # or . instead of /app
 
@@ -75,7 +75,7 @@ If we want to name the container or have it removed after it runs, we add the `-
 
 So the final command will be `docker run --rm --name python-app-container python-app`
 
----
+### Dockerignore
 > A very useful way to create an image from a dockerfile is to make sure the `COPY` command runs inside the current dir and copies everything in it to docker's working dir. For this to work, we are going to need a [`.dockerignore` file](course-content\02-dockerfiles\.dockerignore) so it will not copy the actual Dockerfile but everything else.
 
 The Dockerfile will look like this:
@@ -89,3 +89,15 @@ COPY . . # Copy everything from the current dir to docker's workdir
 
 CMD ["python", "python-app.py"]
 ```
+
+### Image Tags
+
+If we don't tag images, the default tag is "latest". To tag an image we can add a `:` and the version after the image name when we build it, like `docker build -t python-app:0.0.1 .`
+
+### Interactive shell inside a container
+
+To understand what is happening inside our container, we can run it with an interactive shell that will allow us to move around inside its contents, by adding the arg `-it`, and the `/bin/sh` location.
+
+We run `docker run -it --rm --name <container name> <image name> /bin/sh`
+
+We type `exit` to leave the interactive mode.
