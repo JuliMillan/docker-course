@@ -44,6 +44,8 @@ The final command would be somehting like: `docker run -v "C:\Users\...\course-c
 
 ## [Building images from Dockerfiles](course-content\02-dockerfiles)
 
+> *Remember*: `docker build` will create an image from a Dockerfile, and `docker run` will run a container from the specified image
+
 **Dockerfiles** indicate how to create an image and run a container and look something like the following:
 
 ```docker
@@ -76,7 +78,7 @@ If we want to name the container or have it removed after it runs, we add the `-
 So the final command will be `docker run --rm --name python-app-container python-app`
 
 ### Dockerignore
-> A very useful way to create an image from a dockerfile is to make sure the `COPY` command runs inside the current dir and copies everything in it to docker's working dir. For this to work, we are going to need a [`.dockerignore` file](course-content\02-dockerfiles\.dockerignore) so it will not copy the actual Dockerfile but everything else.
+> A very useful way to create an image from a dockerfile, if we want to use all contents of a folder instead a single file, is to make sure the `COPY` command runs inside the current dir and copies everything in it to docker's working dir. For this to work, we are going to need a [`.dockerignore` file](course-content\02-dockerfiles\.dockerignore) so it will not copy the actual Dockerfile but everything else.
 
 The Dockerfile will look like this:
 
@@ -101,3 +103,71 @@ To understand what is happening inside our container, we can run it with an inte
 We run `docker run -it --rm --name <container name> <image name> /bin/sh`
 
 We type `exit` to leave the interactive mode.
+
+## Creating complex images
+
+### Running a flask app
+
+To run a [flask app](course-content\03-flask-app), we will need to install dependencies by pip installing requirements during the image building stage, then we can either
+- run the app directly with `python app.py` or
+- we can set the `FLASK_APP` shell environment variable to the entry point of our web application and when calling the `flask run` command it knows to start running the flask app from the `app.py` file
+
+#### For the first option, inside the Dockerfile we will have the following structure
+```docker
+## 1. What base image do you want to use?
+FROM python:3.8-slim
+
+## 2. Set the working directory
+WORKDIR /app
+
+## 3. -copy the project files into the working directory
+COPY . .
+
+## 4. Install dependencies
+RUN pip install -r requirements.txt # during image building
+
+## 5. Document and inform the developer that the application will use port 5000 of the container
+EXPOSE 5000 
+
+## 6. Define the command to run when the container starts
+CMD ["python", "app.py"] # Will run after we create the container
+```
+
+> The `RUN` command executes during the **image building phase** and whatever is installed here will be installed **in** the image, instead `CMD` gives the container the commands it needs to **run the application**.
+
+> The `EXPOSE` line won't actually expose the actual port, it will just let us know that the port should be exposed.
+
+We navigate to the flask directory and there we build our image and run the containerized app: `docker build -t flask-demo .`
+
+The container will be using the port 5000 but that is isolated from my local machine, so for those two to connect we are going to have to map our ports. So we run the container mapping a host machine port to the container's port with `docker run -p 5000:5000 --rm flask-demo` and open `localhost:5000` on the browser to see our app.
+
+#### For the second way of running a flask app, we will set an environment shell variable
+
+```docker
+## 1. What base image do you want to use?
+FROM python:3.8-slim
+
+## 2. Set the working directory
+WORKDIR /app
+
+## 3. -copy the project files into the working directory
+COPY . .
+
+## 4. Install dependencies
+RUN pip install -r requirements.txt # during image building
+
+## 5. Document and inform the developer that the application will use port 5000 of the container
+EXPOSE 5000 
+
+## 6. Set the environment shell variable to the app
+ENV FLASK_APP=app.py
+
+## 7. Define the command to run when the container starts
+CMD ["flask", "run", "--host=0.0.0.0"] # Will run after we create the container
+```
+
+The `--host=0.0.0.0` argument will allow the app to recieve requests from any available network interface.
+
+From here, we run our app the same way as before.
+
+> To remove every docker object we can run `docker system prune -a`
