@@ -203,3 +203,11 @@ services:
             - "localhost:containerport"
         
 ```
+
+- To run all the containers, execute `docker compose up`.
+- To remove every container and other elements, use `docker compose down`.
+
+
+
+
+
